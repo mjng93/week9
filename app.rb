@@ -51,8 +51,7 @@ get "/events/:id/rsvps/create" do
     
     rsvps_table.insert(
     event_id: @event[:id],
-    name: params["name"],
-    email: params["email"],
+    user_id: cookies["user_id"],
     comments: params["comments"],
     going: params["going"]
     )
@@ -79,13 +78,24 @@ get "/users/create" do
 end
 
 get "/logins/new" do
+
     view "new_login"
 end
 
 get "/logins/create" do
     puts "params: #{params}"
- 
-    view "create_login"
+
+    @user = users_table.where(email: params["email"]).to_a[0]
+    if @user && @user[:password]==params["password"]
+
+        #know user is logged in, but encrypt it so it's not a cookie
+        #session and cookie arrays are automatically stored here through sinatra 
+        session["user_id"] = @user[:id]
+
+        view "create_login"
+    else 
+        view "create_login_failed"
+    end
 end
 
 get "/logout" do
